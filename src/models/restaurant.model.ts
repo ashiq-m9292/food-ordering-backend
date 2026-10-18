@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-interface IRestaurant extends Document {
+interface IRestaurant {
   name: string;
   email: string;
   description: string;
@@ -18,7 +18,7 @@ interface IRestaurant extends Document {
   };
 }
 
-const restaurantSchema = new mongoose.Schema(
+const restaurantSchema = new mongoose.Schema<IRestaurant>(
   {
     name: {
       type: String,
@@ -56,13 +56,13 @@ const restaurantSchema = new mongoose.Schema(
     },
     deliveryFee: {
       type: Number,
-      required: true,
       min: 0,
+      default: 0,
     },
     freeDeliveryAbove: {
       type: Number,
-      required: true,
       min: 0,
+      default: 0,
     },
     isOpen: {
       type: Boolean,
@@ -73,8 +73,12 @@ const restaurantSchema = new mongoose.Schema(
       default: true,
     },
     image: {
-      secure_url: String,
-      public_id: String,
+      public_id: {
+        type: String
+      },
+      secure_url: {
+        type: String
+      }
     },
   },
   { timestamps: true },
