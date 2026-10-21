@@ -11,7 +11,7 @@ const errorHandler = (
   if (err.name === "CastError") {
     return res.status(400).json({
       success: false,
-      message: "Invalid ID"
+      message: "Invalid ID",
     })
   };
   if (err instanceof ZodError) {

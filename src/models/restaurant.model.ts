@@ -5,6 +5,11 @@ interface IRestaurant {
   email: string;
   description: string;
   address: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  deliveryRadiusKm: number;
   phone: string;
   openingTime: string;
   closingTime: string;
@@ -40,6 +45,22 @@ const restaurantSchema = new mongoose.Schema<IRestaurant>(
       type: String,
       required: true,
       trim: true,
+    },
+    location: {
+      latitude: {
+        type: Number,
+        min: -90,
+        max: 90
+      },
+      longitude: {
+        type: Number,
+        min: -180,
+        max: 180
+      }
+    },
+    deliveryRadiusKm: {
+      type: Number,
+      min: 1,
     },
     phone: {
       type: String,

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
@@ -26,7 +27,12 @@ export const protect = (req: Request, res: Response, next: NextFunction) => {
     const result = tokenSchema.safeParse(decoded);
     if (!result.success) {
         return next(new AppError("Invalid token", 401))
-    }
+    };
+
+    // validate mongodb object id
+    if (!mongoose.isValidObjectId(result.data.userId)) {
+        return next(new AppError("Invalid user id", 401))
+    };
 
     // login user info in request
     req.user = {
