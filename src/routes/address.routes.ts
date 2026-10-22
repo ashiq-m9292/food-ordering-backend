@@ -6,7 +6,8 @@ import asyncHandler from "../middlewares/asyncHandler";
 import {
     addAddressSchema,
     updateAddressSchema,
-    deleteAddressSchema
+    deleteAddressSchema,
+    defaultAddressSchema
 } from "../validator/address.validator";
 
 const addressRoutes = Router();
@@ -36,6 +37,13 @@ addressRoutes.delete('/deleteaddress',
 addressRoutes.get('/getalladdress',
     protect,
     asyncHandler(AddressController.getAddressFun)
+);
+
+// default address route
+addressRoutes.put('/defaultaddress',
+    protect,
+    validate(defaultAddressSchema, "body"),
+    asyncHandler(AddressController.defaultAddressFun)
 );
 
 export default addressRoutes;

@@ -4,7 +4,8 @@ import {
     addAddressService,
     updateAddressService,
     getAddressService,
-    deleteAddressService
+    deleteAddressService,
+    defaultAddressService
 } from "../services/address.services";
 
 class AddressController {
@@ -36,8 +37,7 @@ class AddressController {
     // delete address function
     async deleteAddressFun(req: Request, res: Response, next: NextFunction) {
         if (!req.user) throw new AppError("User not found", 401);
-        const { addressId } = req.body;
-        const address = await deleteAddressService(req.user.userId, addressId);
+        await deleteAddressService(req.user.userId, req.body.addressId);
         res.status(200).json({
             success: true,
             message: "Deleted address successfully"
@@ -52,6 +52,17 @@ class AddressController {
             success: true,
             message: "fetched address successfully",
             length: address.length,
+            address
+        })
+    };
+
+    // default address function
+    async defaultAddressFun(req: Request, res: Response, next: NextFunction) {
+        if (!req.user) throw new AppError("User not found", 401);
+        const address = await defaultAddressService(req.user.userId, req.body.addressId);
+        res.status(200).json({
+            success: true,
+            message: "Default address updated successfully",
             address
         })
     };

@@ -20,7 +20,7 @@ export const addAddressService = async (
 
     // check user exist
     const user = await User.findById(userId);
-    if (!user) throw new AppError("User not found", 400);
+    if (!user) throw new AppError("User not found", 401);
 
     // check all field 
     if (!street || !houseNumber || !village || !pincode || !city || !state || !latitude || !longitude || !phone) throw new AppError("All fields are required", 400);
@@ -46,7 +46,6 @@ export const addAddressService = async (
 
 };
 
-
 // update address service
 export const updateAddressService = async (
     userId: string,
@@ -66,7 +65,7 @@ export const updateAddressService = async (
 
     // check user exist
     const user = await User.findById(userId);
-    if (!user) throw new AppError("User not found", 400);
+    if (!user) throw new AppError("User not found", 401);
 
     // check product product exis with address id
     const address = await Address.findOne({ _id: addressId, userId });
@@ -93,13 +92,12 @@ export const updateAddressService = async (
 export const getAddressService = async (userId: string) => {
     // check user exist
     const user = await User.findById(userId);
-    if (!user) throw new AppError("User not found", 400);
+    if (!user) throw new AppError("User not found", 401);
 
     // find address
     const address = await Address.find({ userId });
-    if (!address || address.length === 0) {
-        throw new AppError("Address not found", 404);
-    };
+    if (!address || address.length === 0) return [];
+
     // get address
     return address;
 };
@@ -111,14 +109,54 @@ export const deleteAddressService = async (userId: string, addressId: string) =>
 
     // check user exist
     const user = await User.findById(userId);
-    if (!user) throw new AppError("User not found", 400);
+    if (!user) throw new AppError("User not found", 401);
 
     // check product product exis with address id
     const address = await Address.findOne({ _id: addressId, userId });
     if (!address) throw new AppError("Address not found", 404);
 
+    // check is default address
+    const wasDefault = address.isDefault === true;
+
     // delete address
     await address.deleteOne();
+
+    // if was default address, set new default address
+    if (wasDefault) {
+        const defaultAddress = await Address.findOne({ userId }).sort({ createdAt: 1 });
+        if (defaultAddress) {
+            defaultAddress.isDefault = true;
+            await defaultAddress.save();
+        }
+    }
+
     return address;
 
 };
+
+
+// default address service
+export const defaultAddressService = async (userId: string, addressId: string) => {
+    // address id validation
+    if (!mongoose.isValidObjectId(addressId)) throw new AppError("Invalid address id", 400);
+
+    // check user exist
+    const user = await User.findById(userId);
+    if (!user) throw new AppError("User not found", 401);
+
+    // check address exist
+    const address = await Address.findOne({ _id: addressId, userId });
+    if (!address) throw new AppError("Address not found", 404);
+
+    // all addresses false
+    await Address.updateMany({ userId }, { $set: { isDefault: false } });
+
+    // set default address
+    if (address.isDefault === true) return address;
+    address.isDefault = true;
+    await address.save();
+    // find all user address
+    const allAddress = await Address.find({ userId });
+    return allAddress;
+};
+

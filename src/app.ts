@@ -8,6 +8,7 @@ import productRoutes from "./routes/product.routes";
 import cartRoutes from "./routes/cart.routes";
 import wishlistRoutes from "./routes/wishlist.routes";
 import addressRoutes from "./routes/address.routes";
+import orderRoutes from "./routes/order.routes";
 import errorHandler from "./errors/errorHandler";
 
 const app = express();
@@ -24,6 +25,7 @@ app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/carts", cartRoutes);
 app.use("/api/v1/wishlists", wishlistRoutes);
 app.use("/api/v1/addresses", addressRoutes);
+app.use("/api/v1/orders", orderRoutes);
 app.use(errorHandler);
 
 export default app;

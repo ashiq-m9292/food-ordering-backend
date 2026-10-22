@@ -33,3 +33,9 @@ export const updateAddressSchema = z.object({
 export const deleteAddressSchema = z.object({
     addressId: z.string().min(1, "Address id required"),
 });
+
+// default address validator
+export const defaultAddressSchema = z.object({
+    addressId: z.string().min(1, "Address id required"),
+});
+

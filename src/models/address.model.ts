@@ -19,7 +19,7 @@ const addressSchema = new mongoose.Schema<IAddress>({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
+        required: true
     },
     street: {
         type: String,
@@ -53,18 +53,15 @@ const addressSchema = new mongoose.Schema<IAddress>({
     },
     latitude: {
         type: Number,
-        required: true,
-        unique: true
+        required: true
     },
     longitude: {
         type: Number,
-        required: true,
-        unique: true
+        required: true
     },
     phone: {
         type: String,
-        required: true,
-        unique: true
+        required: true
     },
     isDefault: {
         type: Boolean,
