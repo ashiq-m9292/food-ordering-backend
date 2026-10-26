@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import Restaurant from "../models/restaurant.model";
 import User from "../models/user.model";
@@ -6,11 +7,19 @@ import AppError from "../errors/AppError";
 import { v2 as cloudinary } from 'cloudinary';
 import uploadToCloudinary from "../utills/uploadToCloudinary";
 
+
+// get me user service
+export const getMeUserService = async (userId: string) => {
+    const user = await User.findById(userId).select("-password");
+    if (!user) throw new AppError("User not Found", 404)
+    return user;
+};
+
 // create user service
 export const createUserService = async (name: string, email: string, password: string) => {
     // check user 
     const existingUser = await User.findOne({ email });
-    if (existingUser) throw new AppError("User already Exist", 400);
+    if (existingUser) throw new AppError("User already Exist", 409);
 
     // hash password
     const hashPassword = await bcrypt.hash(password, 10);
@@ -29,64 +38,68 @@ export const createUserService = async (name: string, email: string, password: s
 export const loginUserService = async (email: string, password: string) => {
     // check user 
     const user = await User.findOne({ email });
-    if (!user) throw new AppError("User not Exist", 400);
+    if (!user) throw new AppError("User not Found", 404);
 
     // compare password
     const comparePassword = await bcrypt.compare(password, user.password);
-    if (!comparePassword) throw new AppError("Invalid password", 400);
+    if (!comparePassword) throw new AppError("Invalid password", 404);
 
     // generate jwt token
     const token = generateToken(user._id.toString(), user.role);
 
-    return {
-        user,
-        token
-    };
+    return { user, token };
 };
 
 // find all user service
 export const findAllUserService = async () => {
     const users = await User.find().select("-password");
-    if (users.length === 0) throw new AppError("No Users", 300)
+    if (!users || users.length === 0) return [];
     return users
 };
 
 // find single user by id service
-export const findSingleUserService = async (id: string) => {
-    const user = await User.findById(id);
+export const findSingleUserService = async (userId: string) => {
+    // validate user id
+    if (!mongoose.isObjectIdOrHexString(userId)) throw new AppError("Invalid user Id", 400);
+    const user = await User.findById(userId).select("-password");
     if (!user) throw new AppError("User not Found", 404)
     return user;
 };
 
 // find all restaurant admin service
 export const findAllRestaurantAdminService = async () => {
-    const restaurantAdmin = await User.find({ role: "restaurantAdmin" });
-    if (restaurantAdmin.length === 0) throw new AppError("No Restaurant Admin", 300)
+    const restaurantAdmin = await User.find({ role: "restaurantAdmin" }).select("-password");
+    if (restaurantAdmin.length === 0) throw new AppError("No Restaurant Admin", 404)
     return restaurantAdmin;
 };
 
-// get me user service
-export const getMeUserService = async (userId: string) => {
-    const user = await User.findById(userId);
-    if (!user) throw new AppError("User not Found", 404)
-    return user;
-};
-
 // delete user service
-export const deleteUserService = async (id: string) => {
-    const user = await User.findByIdAndDelete(id);
+export const deleteUserService = async (userId: string) => {
+    // validate user id
+    if (!mongoose.isObjectIdOrHexString(userId)) throw new AppError("Invalid user Id", 404);
+
+    // check user exist
+    const user = await User.findById(userId);
     if (!user) throw new AppError("User not Found", 404)
 
     // image delete
-    if (user.profilePic.public_id) {
+    if (user.profilePic?.public_id) {
         await cloudinary.uploader.destroy(user.profilePic.public_id)
     };
+
+    // delete user
+    await user.deleteOne();
+
     return user;
 };
 
 // create or update profile pic service
-export const createOrUpdatePicService = async (id: string, file?: Express.Multer.File) => {
-    const user = await User.findById(id);
+export const createOrUpdatePicService = async (userId: string, file?: Express.Multer.File) => {
+    // validate user id
+    if (!mongoose.isObjectIdOrHexString(userId)) throw new AppError("Invalid user Id", 404);
+
+    // check user exist
+    const user = await User.findById(userId).select("-password");
     if (!user) throw new AppError("User not Found", 404)
 
     // image upload
@@ -100,23 +113,27 @@ export const createOrUpdatePicService = async (id: string, file?: Express.Multer
             secure_url: result.secure_url
         };
     };
+    // update user
+    await user.save();
     return user;
 };
 
-// forgot password service
+// change password service
 export const changePasswordService = async (userId: string, password: string, newPassword: string) => {
     const user = await User.findById(userId);
     if (!user) throw new AppError("User not Found", 404)
 
     // compare password
     const comparePassword = await bcrypt.compare(password, user.password);
-    if (!comparePassword) throw new AppError("Invalid password", 400);
+    if (!comparePassword) throw new AppError("Invalid password", 404);
 
     // hash password
     const hashPassword = await bcrypt.hash(newPassword, 10);
 
     // update password
     user.password = hashPassword;
+    // update user
+    await user.save();
     return user;
 };
 

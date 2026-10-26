@@ -13,7 +13,7 @@ const orderRoutes = Router();
 // create order route
 orderRoutes.post('/createorder',
     protect,
-    validate(createOrderSchema, "body"),
+    // validate(createOrderSchema, "body"),
     asyncHandler(OrderController.createOrderFun)
 );
 

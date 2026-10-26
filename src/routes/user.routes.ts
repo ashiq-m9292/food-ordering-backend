@@ -16,6 +16,9 @@ import validate from "../middlewares/validate";
 const userRoutes = Router();
 
 
+// me api
+userRoutes.get('/me', protect, asyncHandler(UserController.getMe))
+
 // create user route
 userRoutes.post('/createuser', validate(createUserSchema, "body"), asyncHandler(UserController.createUserFun))
 
@@ -25,14 +28,11 @@ userRoutes.post('/loginuser', validate(loginUserSchema, "body"), asyncHandler(Us
 // find all restaurant admin
 userRoutes.get('/getallrestaurantadmin', protect, authorize("superAdmin"), asyncHandler(UserController.allRestaurantAdminFun))
 
-// me api
-userRoutes.get('/me', protect, asyncHandler(UserController.getMe))
-
 // find all users
-userRoutes.get('/getalluser', protect, asyncHandler(UserController.allUserFun))
+userRoutes.get('/getalluser', protect, authorize("superAdmin", "restaurantAdmin"), asyncHandler(UserController.allUserFun))
 
 // find single user
-userRoutes.get('/getsingleuser/:id', protect, validate(userIdSchema, "params"), asyncHandler(UserController.singleUserFun))
+userRoutes.get('/getsingleuser/:id', protect, authorize("superAdmin", "restaurantAdmin"), validate(userIdSchema, "params"), asyncHandler(UserController.singleUserFun))
 
 // user deleled route 
 userRoutes.delete('/deleteuser/:id', protect, validate(userIdSchema, "params"), validate(userIdSchema, "params"), asyncHandler(UserController.deleteUserFun))
@@ -41,7 +41,7 @@ userRoutes.delete('/deleteuser/:id', protect, validate(userIdSchema, "params"), 
 userRoutes.post('/updateprofilepic/:id', protect, upload.single('image'), validate(userIdSchema, "params"), asyncHandler(UserController.profilePicFun))
 
 // change password
-userRoutes.put('/changepassword', protect, validate(changePasswordSchema, "body"), asyncHandler(UserController.changePassword))
+userRoutes.put('/changepassword/:id', protect, validate(changePasswordSchema, "body"), asyncHandler(UserController.changePassword))
 
 // create restaurant admin
 userRoutes.post('/createrestaurantadmin', protect, authorize("superAdmin"), validate(createRestaurantAdminSchema, "body"), asyncHandler(UserController.createRestaurantAdmin))

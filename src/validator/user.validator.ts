@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // create user validator
 export const createUserSchema = z.object({
-  name: z.string().min(4).max(20),
+  name: z.string().min(1, "Name is required").max(20, "Name must be at most 20 character"),
   email: z.email("Invalid email address"),
   password: z.string().min(4, "minimum required 4 character").max(10, "maximum 10 character")
 });

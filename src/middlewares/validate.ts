@@ -11,6 +11,10 @@ const validate = (schema: z.ZodType, source: "body" | "params" = "body") => {
       if (source === "body" && typeof req.body.sizes === "string" && schema instanceof z.ZodObject) {
         req.body.sizes = JSON.parse(req.body.sizes);
       };
+      // convert location string to object
+      if (source === "body" && typeof req.body.location === "string" && schema instanceof z.ZodObject) {
+        req.body.location = JSON.parse(req.body.location);
+      };
       // validate request data
       const result = schema.parse(data);
       // store validated

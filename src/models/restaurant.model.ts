@@ -5,11 +5,6 @@ interface IRestaurant {
   email: string;
   description: string;
   address: string;
-  location: {
-    latitude: number;
-    longitude: number;
-  };
-  deliveryRadiusKm: number;
   phone: string;
   openingTime: string;
   closingTime: string;
@@ -17,10 +12,15 @@ interface IRestaurant {
   freeDeliveryAbove: number;
   isOpen: boolean;
   isActive: boolean;
-  image: {
+  restaurantImage: {
     secure_url: string;
     public_id: string;
   };
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  deliveryRadiusKm: number;
 }
 
 const restaurantSchema = new mongoose.Schema<IRestaurant>(
@@ -40,40 +40,26 @@ const restaurantSchema = new mongoose.Schema<IRestaurant>(
     description: {
       type: String,
       trim: true,
+      default: ""
     },
     address: {
       type: String,
       required: true,
       trim: true,
     },
-    location: {
-      latitude: {
-        type: Number,
-        min: -90,
-        max: 90
-      },
-      longitude: {
-        type: Number,
-        min: -180,
-        max: 180
-      }
-    },
-    deliveryRadiusKm: {
-      type: Number,
-      min: 1,
-    },
     phone: {
-      type: String,
-      required: true,
-      unique: true
-    },
-    openingTime: {
       type: String,
       required: true
     },
+    openingTime: {
+      type: String,
+      trim: true,
+      default: "9:00 AM"
+    },
     closingTime: {
       type: String,
-      required: true,
+      trim: true,
+      default: "11:00 PM"
     },
     deliveryFee: {
       type: Number,
@@ -93,13 +79,29 @@ const restaurantSchema = new mongoose.Schema<IRestaurant>(
       type: Boolean,
       default: true,
     },
-    image: {
+    restaurantImage: {
       public_id: {
         type: String
       },
       secure_url: {
         type: String
       }
+    },
+    location: {
+      latitude: {
+        type: Number,
+        min: -90,
+        max: 90
+      },
+      longitude: {
+        type: Number,
+        min: -180,
+        max: 180
+      }
+    },
+    deliveryRadiusKm: {
+      type: Number,
+      min: 1,
     },
   },
   { timestamps: true },

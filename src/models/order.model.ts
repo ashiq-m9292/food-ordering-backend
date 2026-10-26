@@ -131,7 +131,7 @@ const orderSchema = new mongoose.Schema<IOrder>({
     ],
     deliveryFee: {
         type: Number,
-        required: true
+        default: 0
     },
     totalPrice: {
         type: Number,
@@ -139,13 +139,13 @@ const orderSchema = new mongoose.Schema<IOrder>({
     },
     paymentMethod: {
         type: String,
-        required: true,
-        enum: ["COD", "ONLINE"]
+        enum: ["COD", "ONLINE"],
+        default: "COD"
     },
     orderStatus: {
         type: String,
-        required: true,
-        enum: ["PENDING", "DELIVERED", "CANCELLED"]
+        enum: ["PENDING", "DELIVERED", "CANCELLED"],
+        default: "PENDING"
     },
 }, { timestamps: true });
 

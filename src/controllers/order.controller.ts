@@ -11,7 +11,8 @@ class OrderController {
     // create order function
     async createOrderFun(req: Request, res: Response, next: NextFunction) {
         if (!req.user) throw new AppError("User not found", 401);
-        const order = await createOrderService();
+        const { restaurantId, deliveryAddress, products, totalPrice, deliveryFee, paymentMethod, orderStatus } = req.body;
+        const order = await createOrderService(req.user.userId, deliveryAddress, products);
         res.status(200).json({
             success: true,
             message: "Order created successfully",
@@ -35,7 +36,7 @@ class OrderController {
     // delete order function
     async deleteOrderFun(req: Request, res: Response, next: NextFunction) {
         if (!req.user) throw new AppError("User not found", 401);
-        const order = await deleteOrderService(req.user.userId, req.body.orderId);
+        await deleteOrderService(req.user.userId, req.body.orderId);
         res.status(200).json({
             success: true,
             message: "Order deleted successfully"

@@ -4,6 +4,7 @@ import { protect } from "../middlewares/auth.middleware";
 import authorize from "../middlewares/authorize";
 import {
   createRestaurantSchema,
+  updateRestaurantSchema,
   restaurantIdSchema
 } from "../validator/restaurant.validator";
 import validate from "../middlewares/validate";
@@ -27,8 +28,7 @@ restaurantRouter.put('/updaterestaurant/:id',
   protect,
   authorize("superAdmin"),
   upload.single('image'),
-  validate(restaurantIdSchema, "params"),
-  validate(createRestaurantSchema.partial(), "body"),
+  validate(updateRestaurantSchema, "body"),
   asyncHandler(RestaurantController.updateRestaurant)
 );
 

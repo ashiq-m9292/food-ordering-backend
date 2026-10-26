@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema<IUser>({
     password: {
         type: String,
         required: true,
-        unique: true,
+        unique: true
     },
     profilePic: {
         public_id: {
@@ -59,14 +59,10 @@ const userSchema = new mongoose.Schema<IUser>({
         default: undefined
     },
     isActive: {
-        type: Boolean
+        type: Boolean,
+        default: true
     }
 }, { timestamps: true });
-
-userSchema.index(
-    { restaurantId: 1 },
-    { unique: true, partialFilterExpression: { role: "restaurantAdmin" } }
-);
 
 const User = mongoose.model<IUser>("User", userSchema);
 export default User;
