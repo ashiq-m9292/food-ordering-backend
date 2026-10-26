@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "../models/user.model";
 import Product from "../models/product.model";
 import Category from "../models/category.model";
@@ -5,7 +6,7 @@ import uploadToCloudinary from "../utills/uploadToCloudinary";
 import { v2 as cloudinary } from 'cloudinary';
 import AppError from "../errors/AppError";
 
-interface ISizes {
+interface ISize {
     size: string;
     price: number;
     discountPrice: number;
@@ -20,22 +21,22 @@ export const createProductService = async (
     categoryId: string,
     name: string,
     description: string,
-    sizes: ISizes[],
+    sizes: ISize[],
     foodType: string,
-    files: Express.Multer.File[]
+    files: Express.Multer.File[],
 ) => {
     // check user exist
     const user = await User.findById(userId);
-    if (!user) throw new AppError("User not found", 400);
+    if (!user) throw new AppError("User not found", 404);
 
     // check restaurant exist
-    if (!user.restaurantId) throw new AppError("Restaurant not found", 400);
+    if (!user.restaurantId) throw new AppError("Restaurant not found", 404);
 
     // check restaurant category exist
     const restaurantCategory = await Category.findOne({ restaurantId: user.restaurantId, _id: categoryId });
-    if (!restaurantCategory) throw new AppError("Restaurant categori not found", 400);
+    if (!restaurantCategory) throw new AppError("Restaurant categori not found", 404);
 
-    if (!Array.isArray(sizes) || sizes.length === 0) throw new AppError("Sizes is not valid", 400);
+    if (!Array.isArray(sizes) || sizes.length === 0) throw new AppError("Sizes is not valid", 404);
 
     // check file
     if (!files || files.length === 0) throw new AppError("Please provided image", 400);
@@ -68,54 +69,34 @@ export const createProductService = async (
 
 };
 
-// get all product service
-export const getAllProductService = async () => {
-    const product = await Product.find();
-    if (product.length === 0) throw new AppError("No Products", 300)
-    return product;
-};
-
-// get single restaurant product service
-export const getSingleProductService = async (userId: string) => {
-    const user = await User.findById(userId);
-    if (!user) throw new AppError("User not found", 400)
-
-    // check restaurant exist
-    if (!user.restaurantId) throw new AppError("Restaurant not found", 400)
-
-    // get all single restaurant product
-    const product = await Product.find({ restaurantId: user.restaurantId });
-    if (!product) throw new AppError("No Restaurants", 400)
-    if (product.length === 0) throw new AppError("No Products", 300)
-    return product;
-};
-
 // update product service
 export const updateProductService = async (
     userId: string,
     categoryId: string,
-    id: string,
+    productId: string,
     name: string,
     description: string,
-    sizes: ISizes[],
+    sizes: ISize[],
     foodType: string,
     files: Express.Multer.File[]
 ) => {
+    // validate product id
+    if (!mongoose.isValidObjectId(productId)) throw new AppError("Invalid product Id", 400);
 
     // check user exist
     const user = await User.findById(userId);
-    if (!user) throw new AppError("User not found", 400);
+    if (!user) throw new AppError("User not found", 404);
 
     // check restaurant exist
-    if (!user.restaurantId) throw new AppError("Restaurant not found", 400);
+    if (!user.restaurantId) throw new AppError("Restaurant not found", 404);
 
     // check restaurant category exist
     const restaurantCategori = await Category.findOne({ restaurantId: user.restaurantId, _id: categoryId });
-    if (!restaurantCategori) throw new AppError("Restaurant categori not found", 400);
+    if (!restaurantCategori) throw new AppError("Restaurant categori not found", 404);
 
     // check product exist
-    const product = await Product.findOne({ _id: id, restaurantId: user.restaurantId });
-    if (!product) throw new AppError("Product not found", 400);
+    const product = await Product.findOne({ _id: productId, restaurantId: user.restaurantId });
+    if (!product) throw new AppError("Product not found", 404);
 
     if (name !== undefined) product.name = name;
     if (description !== undefined) product.description = description;
@@ -144,9 +125,8 @@ export const updateProductService = async (
     return product;
 };
 
-
 // delete product service
-export const deleteProductService = async (userId: string, id: string) => {
+export const deleteProductService = async (userId: string, productId: string) => {
     // check user exist
     const user = await User.findById(userId);
     if (!user) throw new AppError("User not found", 400);
@@ -155,17 +135,38 @@ export const deleteProductService = async (userId: string, id: string) => {
     if (!user.restaurantId) throw new AppError("Restaurant not found", 400);
 
     // check product exist
-    const product = await Product.findOne({ _id: id, restaurantId: user.restaurantId });
-    if (!product) throw new AppError("Product not found", 400);
+    const product = await Product.findOne({ _id: productId, restaurantId: user.restaurantId });
+    if (!product) throw new AppError("Product not found", 404);
 
     // delete product image
-    if (product.productImages.length > 0) {
+    if (product.productImages?.length > 0) {
         await Promise.all(product.productImages.map(async (image) => {
             await cloudinary.uploader.destroy(image.public_id);
         }));
     };
     // delete product
-    const productDelete = await Product.findOneAndDelete({ _id: id, restaurantId: user.restaurantId });
-    return productDelete;
+    await product.deleteOne();
+    return product;
 
+};
+
+// get all product service
+export const getAllProductService = async () => {
+    const product = await Product.find();
+    if (product.length === 0) return [];
+    return product;
+};
+
+// get single restaurant product service
+export const getSingleProductService = async (userId: string) => {
+    const user = await User.findById(userId);
+    if (!user) throw new AppError("User not found", 400)
+
+    // check restaurant exist
+    if (!user.restaurantId) throw new AppError("Restaurant not found", 400)
+
+    // get all single restaurant product
+    const product = await Product.find({ restaurantId: user.restaurantId });
+    if (!product || product.length === 0) return [];
+    return product;
 };

@@ -6,7 +6,8 @@ import asyncHandler from "../middlewares/asyncHandler";
 import CategoryController from "../controllers/category.controller";
 import upload from "../middlewares/multer";
 import {
-    createUpdateCategorySchema,
+    createCategorySchema,
+    updateCategorySchema,
     categoryByIdSchema
 } from "../validator/category.validator";
 
@@ -17,7 +18,7 @@ categoryRoutes.post('/createcategory',
     protect,
     authorize("restaurantAdmin"),
     upload.single('image'),
-    validate(createUpdateCategorySchema, "body"),
+    validate(createCategorySchema, "body"),
     asyncHandler(CategoryController.createCategoryFun)
 );
 
@@ -25,8 +26,9 @@ categoryRoutes.post('/createcategory',
 categoryRoutes.put('/updatecategory/:id',
     protect,
     authorize("restaurantAdmin"),
+    validate(categoryByIdSchema, "params"),
     upload.single('image'),
-    validate(createUpdateCategorySchema.partial(), "body"),
+    validate(updateCategorySchema, "body"),
     asyncHandler(CategoryController.updateCategoryFun)
 );
 
@@ -38,23 +40,10 @@ categoryRoutes.delete('/deletecategory/:id',
     asyncHandler(CategoryController.deleteCategoryFun)
 );
 
-// get all category route
+// get single category route
 categoryRoutes.get('/getallcategory',
-    asyncHandler(CategoryController.getAllRestaurantCategoryFun)
-);
-
-// get all single category route
-categoryRoutes.get('/getallsinglerestaurantcategori',
     protect,
-    authorize("restaurantAdmin"),
-    asyncHandler(CategoryController.getAllSingleRestaurantCategoryFun)
-);
-
-// get single categori route
-categoryRoutes.get('/getallsinglecategori/:id',
-    protect,
-    authorize("superAdmin"),
-    validate(categoryByIdSchema, "params"),
+    authorize("restaurantAdmin", "superAdmin"),
     asyncHandler(CategoryController.getSingleRestaurantCategoryFun)
 );
 

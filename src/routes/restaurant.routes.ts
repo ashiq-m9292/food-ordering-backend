@@ -27,6 +27,7 @@ restaurantRouter.post('/createrestaurant',
 restaurantRouter.put('/updaterestaurant/:id',
   protect,
   authorize("superAdmin"),
+  validate(restaurantIdSchema, "params"),
   upload.single('image'),
   validate(updateRestaurantSchema, "body"),
   asyncHandler(RestaurantController.updateRestaurant)

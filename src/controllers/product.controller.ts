@@ -78,7 +78,7 @@ class ProductController {
 
     // get single product function
     async getSingleProductFun(req: Request, res: Response, next: NextFunction) {
-        if (!req.user) throw new AppError("User not found", 401);
+        if (!req.user) throw new AppError("User not found", 404);
         const product = await getSingleProductService(req.user.userId);
         res.status(200).json({
             success: true,

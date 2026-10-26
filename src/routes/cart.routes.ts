@@ -6,22 +6,23 @@ import asyncHandler from "../middlewares/asyncHandler";
 import {
     addToCartSchema,
     getByCartIdSchema,
-    increaseDecreaseQuantitySchema
+    updateCartItemQuantitySchema
 } from "../validator/cart.validator";
 
 const cartRoutes = Router();
 
 // add to cart route
-cartRoutes.post('/addtocart',
+cartRoutes.post('/addtocart/:productId',
     protect,
+    validate(getByCartIdSchema, "params"),
     validate(addToCartSchema, "body"),
     asyncHandler(CartController.addToCartFun)
 );
 
 // remove from cart route
-cartRoutes.delete('/removefromcart',
+cartRoutes.delete('/removefromcart/:productId',
     protect,
-    validate(getByCartIdSchema, "body"),
+    validate(getByCartIdSchema, "params"),
     asyncHandler(CartController.removeFromCartFun)
 );
 
@@ -31,11 +32,11 @@ cartRoutes.get('/getallcart',
     asyncHandler(CartController.getCartFun)
 );
 
-// increase decrease quantity route
-cartRoutes.put('/increasedecreasequantity',
+cartRoutes.put('/updatequantity/:productId',
     protect,
-    validate(increaseDecreaseQuantitySchema, "body"),
-    asyncHandler(CartController.increaseDecreaseQuantityFun)
+    validate(getByCartIdSchema, "params"),
+    validate(updateCartItemQuantitySchema, "body"),
+    asyncHandler(CartController.updateCartItemQuantityFun)
 );
 
 

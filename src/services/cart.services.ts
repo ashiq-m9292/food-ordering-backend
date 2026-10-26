@@ -8,11 +8,15 @@ import AppError from "../errors/AppError";
 
 export const addToCartService = async (userId: string, productId: string, size: string, quantity: number) => {
     // product id validation
-    if (!mongoose.isValidObjectId(productId)) throw new AppError("Invalid product id", 400);
+    if (!mongoose.isObjectIdOrHexString(productId)) throw new AppError("Invalid product id", 404);
 
     // check user exist
     const user = await User.findById(userId).select("-password");
-    if (!user) throw new AppError("User not found", 401);
+    if (!user) throw new AppError("User not found", 404);
+
+    // check existing cart item exist
+    const cartItem = await Cart.findOne({ productId, userId });
+    if (cartItem) return cartItem;
 
     // product exist 
     const product = await Product.findById(productId);
@@ -30,114 +34,66 @@ export const addToCartService = async (userId: string, productId: string, size: 
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) throw new AppError("Quantity must be between 1 and 10", 400);
 
     // product stock quantity
-    if (selectedSize.stockQuantity < quantity) throw new AppError("Quantity greater than stock quantity", 400);
+    if (selectedSize.stockQuantity < quantity) throw new AppError("Quantity greater than stock quantity", 404);
 
-    // check cart exist
-    const cart = await Cart.findOne({ userId });
-    if (!cart) {
-        // create new cart
-        const newCart = await Cart.create({
-            userId,
-            items: [
-                {
-                    productId: product._id,
-                    restaurantId: restaurant._id,
-                    size: selectedSize.size,
-                    quantity
-                }
-            ]
-        });
-        return newCart;
-    };
 
-    // check item exist
-    const item = cart.items.find((item) => item.productId.toString() === productId.toString() && item.size === size);
-    if (item) throw new AppError("Item already exist", 401);
-
-    // add item to cart
-    cart.items.push({
-        productId: product._id,
-        restaurantId: restaurant._id,
-        size: selectedSize.size,
+    // create new cart item
+    const newCartItem = await Cart.create({
+        userId,
+        productId,
+        restaurantId: restaurant._id.toString(),
+        size,
         quantity
     });
-    // update cart
-    await cart.save();
-    return cart;
 
+    return newCartItem;
 };
 
 // remove from cart service
 export const removeFromCartService = async (userId: string, productId: string) => {
     // validate user id
-    if (!mongoose.isValidObjectId(productId)) throw new AppError("Invalid product id", 400);
+    if (!mongoose.isObjectIdOrHexString(productId)) throw new AppError("Invalid product id", 404);
 
     // check user exist
     const user = await User.findById(userId);
-    if (!user) throw new AppError("User not found", 400);
+    if (!user) throw new AppError("User not found", 404);
 
-    // check cart exist
-    const cart = await Cart.findOne({ userId });
-    if (!cart || cart.items.length === 0) throw new AppError("Cart not found", 404);
+    // check item exist in cart
+    const cartItem = await Cart.findOne({ userId, productId });
+    if (!cartItem) throw new AppError("Item not found", 404);
 
-    // check item exist
-    const item = cart.items.find((item) => item.productId.toString() === productId.toString());
-    if (!item) throw new AppError("Item not found", 404);
-
-    // remove item from cart
-    cart.items = cart.items.filter((item) => item.productId.toString() !== productId.toString());
-
-    // update cart
-    await cart.save();
-    return cart;
+    await cartItem.deleteOne();
+    return cartItem;
 };
 
 // get cart service
 export const getCartService = async (userId: string) => {
     // check user exist
-    const user = await User.findById(userId);
-    if (!user) throw new AppError("User not found", 400);
+    const user = await User.findById(userId).select("-password");
+    if (!user) throw new AppError("User not found", 404);
 
-    // find cart
-    const cart = await Cart.findOne({ userId });
-    if (!cart || cart.items.length === 0) {
-        return {
-            success: true,
-            message: "Cart is empty",
-            items: []
-        }
-    };
-    // get cart
-    return {
-        success: true,
-        message: "fetched cart",
-        items: cart.items
-    };
+    // find cart item
+    const cartItems = await Cart.find({ userId });
+    if (!cartItems || cartItems.length === 0) return [];
+    return cartItems;
 };
 
-// increase decrease quantity service
-export const increaseDecreaseQuantityService = async (userId: string, productId: string, quantity: number) => {
-    // validate user id
-    if (!mongoose.isValidObjectId(productId)) throw new AppError("Invalid product id", 400);
-
-    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) throw new AppError("Quantity must be between 1 and 10", 400);
+// update cart item quantity service
+export const updateCartItemQuantityService = async (userId: string, productId: string, quantity: number) => {
+    // product id validation
+    if (!mongoose.isObjectIdOrHexString(productId)) throw new AppError("Invalid product id", 404);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) throw new AppError("Quantity must be between 1 and 10", 404);
 
     // check user exist
-    const user = await User.findById(userId);
-    if (!user) throw new AppError("User not found", 400);
+    const user = await User.findById(userId).select("-password");
+    if (!user) throw new AppError("User not found", 404);
 
-    // check cart exist
-    const cart = await Cart.findOne({ userId });
-    if (!cart || cart.items.length === 0) throw new AppError("Cart not found", 400);
+    // check existing cart item exist
+    const cartItem = await Cart.findOne({ productId, userId });
+    if (!cartItem) throw new AppError("Item not found", 404);
 
-    // check item exist
-    const item = cart.items.find((item) => item.productId.toString() === productId.toString());
-    if (!item) throw new AppError("Item not found", 400);
-
-    // update item quantity
-    item.quantity = quantity;
-    // update cart
-    await cart.save();
-    return cart;
-
-};
+    // update cart item
+    cartItem.quantity = quantity;
+    await cartItem.save();
+    return cartItem;
+}

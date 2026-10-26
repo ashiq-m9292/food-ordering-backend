@@ -25,6 +25,7 @@ productRoutes.post('/createproduct',
 productRoutes.put('/updateproduct/:id',
     protect,
     authorize("restaurantAdmin"),
+    validate(productByIdSchema, "params"),
     upload.array("images", 5),
     validate(createUpdateProductSchema.partial(), "body"),
     asyncHandler(ProductController.updateProductFun)
